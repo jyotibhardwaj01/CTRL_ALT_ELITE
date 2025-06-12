@@ -1,0 +1,7 @@
+azure-identity
+boto3
+langchain_openai
+openai
+tiktoken
+langchain
+python-dotenv
