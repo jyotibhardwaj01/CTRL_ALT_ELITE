@@ -1,0 +1,37 @@
+{
+  "source_prompt": "Placeholder: User's itinerary search query (e.g., '7-day trip to Phuket focusing on beaches and culture')",
+  "itinerary_plan": {
+    "destination": "Phuket, Thailand",
+    "itinerary": [
+        {
+            "day": 1,
+            "activity": "Arrive in Phuket, check into hotel, relax by the pool."
+        },
+        {
+            "day": 2,
+            "activity": "Patong Beach exploration and water sports."
+        },
+        {
+            "day": 3,
+            "activity": "Phi Phi Islands day trip (snorkeling, Maya Bay)."
+        },
+        {
+            "day": 4,
+            "activity": "Visit Big Buddha and Wat Chalong."
+        },
+        {
+            "day": 5,
+            "activity": "Relaxing day at Kata Noi Beach, sunset dinner."
+        },
+        {
+            "day": 6,
+            "activity": "Explore Old Phuket Town, local markets."
+        },
+        {
+            "day": 7,
+            "activity": "Depart from Phuket."
+        }
+    ],
+    "estimated_cost": "$1000 - $1500 (excluding flights)"
+  }
+}
