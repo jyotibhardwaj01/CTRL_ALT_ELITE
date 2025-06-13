@@ -1,0 +1,213 @@
+{
+    "destination": "Paris, France",
+    "from_date": "2025-06-13",
+    "to_date": "2025-06-19",
+    "duration": 7,
+    "num_travellers": 1,
+    "details": [
+        {
+            "day": 1,
+            "day_summary": "Exploring iconic Parisian landmarks.",
+            "activities": [
+                {
+                    "name": "Eiffel Tower",
+                    "time_of_day": "Morning",
+                    "description": "Visit the iconic tower and enjoy panoramic views of Paris.",
+                    "why_relevant": "Symbol of Paris and a must-see attraction.",
+                    "estimated_duration": "2-3 hours",
+                    "estimated_cost": "€25",
+                    "poi_image_url": ""
+                },
+                {
+                    "name": "Seine River Cruise",
+                    "time_of_day": "Afternoon",
+                    "description": "Enjoy a relaxing cruise on the Seine River, passing by famous landmarks.",
+                    "why_relevant": "A unique way to see Paris from the water.",
+                    "estimated_duration": "1-2 hours",
+                    "estimated_cost": "€15",
+                    "poi_image_url": ""
+                }
+            ],
+            "daily_meal_suggestions": {
+                "breakfast": "Croissants and coffee at a local café.",
+                "lunch": "Crepes from a street vendor.",
+                "dinner": "Dinner at a romantic bistro with traditional French cuisine."
+            },
+            "daily_logistical_tips": "Book Eiffel Tower tickets online to avoid queues."
+        },
+        {
+            "day": 2,
+            "day_summary": "Exploring art and history.",
+            "activities": [
+                {
+                    "name": "Louvre Museum",
+                    "time_of_day": "Morning",
+                    "description": "Explore the world's largest art museum and historic monument.",
+                    "why_relevant": "Home to many of the world's most famous artworks.",
+                    "estimated_duration": "3-4 hours",
+                    "estimated_cost": "€17",
+                    "poi_image_url": ""
+                },
+                {
+                    "name": "Notre-Dame Cathedral",
+                    "time_of_day": "Afternoon",
+                    "description": "Visit the iconic Gothic cathedral and climb its towers for a view of the city.",
+                    "why_relevant": "An architectural masterpiece and symbol of Paris.",
+                    "estimated_duration": "1-2 hours",
+                    "estimated_cost": "Free for entry; €10 for tower climb",
+                    "poi_image_url": ""
+                }
+            ],
+            "daily_meal_suggestions": {
+                "breakfast": "Hotel breakfast or local bakery.",
+                "lunch": "Cafe near the Louvre.",
+                "dinner": "Traditional French restaurant near Notre-Dame."
+            },
+            "daily_logistical_tips": "Wear comfortable shoes for walking."
+        },
+        {
+            "day": 3,
+            "day_summary": "Discovering Parisian neighborhoods.",
+            "activities": [
+                {
+                    "name": "Montmartre Walking Tour",
+                    "time_of_day": "Morning",
+                    "description": "Walk through the charming streets of Montmartre, visit Sacré-Cœur Basilica.",
+                    "why_relevant": "Famous for its bohemian past and artistic history.",
+                    "estimated_duration": "2-3 hours",
+                    "estimated_cost": "Free",
+                    "poi_image_url": "Output\\images\\Paris_France_day_3_Montmartre_Walking_Tour_placeholder_847358bf.jpg"
+                },
+                {
+                    "name": "Moulin Rouge",
+                    "time_of_day": "Evening",
+                    "description": "Enjoy a spectacular cabaret show at the historic Moulin Rouge.",
+                    "why_relevant": "Legendary venue known for its entertainment and history.",
+                    "estimated_duration": "2-3 hours",
+                    "estimated_cost": "€100",
+                    "poi_image_url": ""
+                }
+            ],
+            "daily_meal_suggestions": {
+                "breakfast": "Coffee and pastries in Montmartre.",
+                "lunch": "Lunch at a café in Montmartre.",
+                "dinner": "Pre-show dinner near Moulin Rouge."
+            },
+            "daily_logistical_tips": "Reserve tickets for the Moulin Rouge show in advance."
+        },
+        {
+            "day": 4,
+            "day_summary": "Shopping and leisure.",
+            "activities": [
+                {
+                    "name": "Champs-Élysées Shopping",
+                    "time_of_day": "Morning",
+                    "description": "Stroll along the famous avenue and explore luxury shops and cafes.",
+                    "why_relevant": "Known for shopping and iconic Parisian elegance.",
+                    "estimated_duration": "2-3 hours",
+                    "estimated_cost": "Variable",
+                    "poi_image_url": ""
+                },
+                {
+                    "name": "Luxembourg Gardens",
+                    "time_of_day": "Afternoon",
+                    "description": "Relax in the beautiful gardens and enjoy the serene atmosphere.",
+                    "why_relevant": "A peaceful retreat in the heart of Paris.",
+                    "estimated_duration": "1-2 hours",
+                    "estimated_cost": "Free",
+                    "poi_image_url": ""
+                }
+            ],
+            "daily_meal_suggestions": {
+                "breakfast": "Breakfast at a café on Champs-Élysées.",
+                "lunch": "Lunch at a brasserie near the gardens.",
+                "dinner": "Dinner at a nearby restaurant."
+            },
+            "daily_logistical_tips": "Keep an eye on your belongings while shopping."
+        },
+        {
+            "day": 5,
+            "day_summary": "Modern art and architecture.",
+            "activities": [
+                {
+                    "name": "Centre Pompidou",
+                    "time_of_day": "Morning",
+                    "description": "Explore the modern art museum and architectural marvel.",
+                    "why_relevant": "Known for its contemporary art collections and unique design.",
+                    "estimated_duration": "2-3 hours",
+                    "estimated_cost": "€14",
+                    "poi_image_url": ""
+                },
+                {
+                    "name": "La Défense",
+                    "time_of_day": "Afternoon",
+                    "description": "Visit the modern business district with impressive skyscrapers.",
+                    "why_relevant": "Showcases the modern side of Paris.",
+                    "estimated_duration": "1-2 hours",
+                    "estimated_cost": "Free",
+                    "poi_image_url": ""
+                }
+            ],
+            "daily_meal_suggestions": {
+                "breakfast": "Breakfast at a modern café.",
+                "lunch": "Lunch at Centre Pompidou's café.",
+                "dinner": "Dinner in La Défense."
+            },
+            "daily_logistical_tips": "Consider using public transport to reach La Défense."
+        },
+        {
+            "day": 6,
+            "day_summary": "Day trip to Versailles.",
+            "activities": [
+                {
+                    "name": "Palace of Versailles",
+                    "time_of_day": "All Day",
+                    "description": "Explore the opulent palace and stunning gardens.",
+                    "why_relevant": "A UNESCO World Heritage site and symbol of royal grandeur.",
+                    "estimated_duration": "6-7 hours",
+                    "estimated_cost": "€20",
+                    "poi_image_url": ""
+                }
+            ],
+            "daily_meal_suggestions": {
+                "breakfast": "Breakfast at the hotel.",
+                "lunch": "Lunch at a café in Versailles.",
+                "dinner": "Return to Paris for dinner at a local restaurant."
+            },
+            "daily_logistical_tips": "Buy train tickets to Versailles in advance."
+        },
+        {
+            "day": 7,
+            "day_summary": "Relaxation and farewell.",
+            "activities": [
+                {
+                    "name": "Le Marais District",
+                    "time_of_day": "Morning",
+                    "description": "Explore the historic district with chic boutiques and cafes.",
+                    "why_relevant": "Known for its vibrant atmosphere and trendy culture.",
+                    "estimated_duration": "2-3 hours",
+                    "estimated_cost": "Free",
+                    "poi_image_url": ""
+                },
+                {
+                    "name": "Sainte-Chapelle",
+                    "time_of_day": "Afternoon",
+                    "description": "Visit the Gothic chapel known for its stunning stained glass windows.",
+                    "why_relevant": "Architectural gem and historical site.",
+                    "estimated_duration": "1 hour",
+                    "estimated_cost": "€11",
+                    "poi_image_url": ""
+                }
+            ],
+            "daily_meal_suggestions": {
+                "breakfast": "Breakfast at a café in Le Marais.",
+                "lunch": "Lunch at a trendy restaurant.",
+                "dinner": "Farewell dinner at a classic Parisian bistro."
+            },
+            "daily_logistical_tips": "Check opening hours for Sainte-Chapelle before visiting."
+        }
+    ],
+    "estimated_cost": "€1000 - €1500 for accommodation, activities, and local transport.",
+    "estimated_daily_meal_cost_per_person": "€40-60 EUR",
+    "total_estimated_meal_cost": "€350.00 for 1 person(s) over 7 day(s)"
+}

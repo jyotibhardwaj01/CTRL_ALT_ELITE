@@ -3,16 +3,93 @@ import json
 import os
 import re
 import datetime
+import requests # For downloading images
+import uuid # For unique filenames
+from urllib.parse import urlparse # To get file extension
 from llm_access.llm_api import get_llm_response # Assuming this is the function to call the LLM
 
 INPUT_DIR = "input"
-OUTPUT_DIR = "output" # Base output directory
+OUTPUT_DIR = "Output" # Base output directory, changed to capital 'O'
+IMAGES_SUBDIR = "images" # Subdirectory for storing downloaded images
 
 def sanitize_foldername(name):
     """Sanitizes a string to be used as a folder or file name."""
     name = str(name).strip().replace(' ', '_').replace(',', '')
     name = re.sub(r'(?u)[^-\w.]', '', name) # Keep alphanumeric, underscore, hyphen, dot
-    return name if name else "unknown_item"
+    return name[:100] if name else "unknown_item" # Limit length
+
+def get_llm_placeholder_image_url(description_for_image):
+    """
+    Asks the LLM for a generic, royalty-free, publicly accessible image URL
+    based on the provided description.
+    Returns a URL string or None.
+    """
+    prompt = (
+        f"Please provide a single, publicly accessible, royalty-free image URL that best represents the following: '{description_for_image}'. "
+        "The image should be suitable as a general placeholder. "
+        "Respond with ONLY the URL itself, no other text or explanation. "
+        "Example: https://images.unsplash.com/photo-12345. If no suitable royalty-free image can be found, respond with an empty string."
+    )
+    try:
+        response = get_llm_response(prompt) # Assuming get_llm_response can handle direct string if LLM returns just URL
+        if isinstance(response, str) and response.strip().startswith(('http://', 'https://')):
+            print(f"LLM provided placeholder image URL: {response.strip()}")
+            return response.strip()
+        # If LLM response is a dict (as it was for other calls)
+        elif isinstance(response, dict) and "image_url" in response and isinstance(response["image_url"], str) and response["image_url"].strip().startswith(('http://', 'https://')):
+            print(f"LLM provided placeholder image URL: {response['image_url'].strip()}")
+            return response["image_url"].strip()
+        elif isinstance(response, dict) and "url" in response and isinstance(response["url"], str) and response["url"].strip().startswith(('http://', 'https://')): # another common key
+            print(f"LLM provided placeholder image URL: {response['url'].strip()}")
+            return response["url"].strip()
+        else:
+            print(f"LLM did not provide a valid placeholder URL for '{description_for_image}'. Response: {str(response)[:200]}")
+            return None
+    except Exception as e:
+        print(f"Error fetching placeholder image URL from LLM for '{description_for_image}': {e}")
+        return None
+
+def download_image(image_url, destination_folder, base_filename):
+    """
+    Downloads an image from a URL and saves it locally.
+    Returns the local path if successful, else None.
+    """
+    if not image_url or not isinstance(image_url, str) or not image_url.strip().startswith(('http://', 'https://')):
+        return None
+    
+    try:
+        # Attempt with verification first
+        try:
+            response = requests.get(image_url, stream=True, timeout=10, verify=True)
+            response.raise_for_status()
+        except requests.exceptions.SSLError as ssl_err:
+            print(f"SSL verification failed for {image_url}: {ssl_err}. Attempting with verify=False (SECURITY WARNING).")
+            print("WARNING: Disabling SSL verification. This is insecure and should ONLY be used in controlled development environments if you understand the risks.")
+            response = requests.get(image_url, stream=True, timeout=10, verify=False)
+            response.raise_for_status() # Raise an exception for bad status codes even with verify=False
+
+        # Try to get a file extension
+        parsed_url = urlparse(image_url)
+        path_parts = os.path.splitext(parsed_url.path)
+        ext = path_parts[1] if len(path_parts) > 1 and path_parts[1] else '.jpg' # Default to .jpg
+        
+        # Sanitize base_filename further if needed, and add UUID to ensure uniqueness
+        filename = f"{sanitize_foldername(base_filename)}_{uuid.uuid4().hex[:8]}{ext}"
+        filepath = os.path.join(destination_folder, filename)
+        
+        os.makedirs(destination_folder, exist_ok=True)
+        
+        with open(filepath, 'wb') as f:
+            for chunk in response.iter_content(chunk_size=8192):
+                f.write(chunk)
+        print(f"Successfully downloaded image to {filepath}")
+        return filepath
+    except requests.exceptions.RequestException as e:
+        print(f"Failed to download {image_url}: {e}")
+        return None
+    except IOError as e:
+        print(f"Failed to save image from {image_url} to {filepath}: {e}")
+        return None
 
 def create_travel_itinerary(preferences):
     """
@@ -71,26 +148,30 @@ def create_travel_itinerary(preferences):
 
     final_prompt = " ".join(prompt_parts)
     final_prompt += (
-        " CRITICAL INSTRUCTIONS FOR ITINERARY FORMATTING: Please provide a detailed day-by-day plan. "
-        "Each day MUST be structured into 'Morning', 'Afternoon', and 'Evening' segments.\n"
-        "For EACH suggested Point of Interest (POI) or activity within these segments, you ABSOLUTELY MUST provide ALL of the following details. "
-        "Format these details exactly as shown using Markdown, with each piece of information on a new line:\n"
-        "**Name:** [Full Name of POI/Activity]\n"
-        "**Description:** [A brief, concise description (1-2 sentences).]\n"
-        "**Estimated Duration:** [e.g., 2 hours, 30 minutes, Half Day]\n"
-        "**Cost Level:** [e.g., Free, $, $$, $$$ (provide a rough estimate if possible)]\n"
-        "**Popularity Score:** [e.g., 90/100, High, Medium, Low - based on general perception]\n"
-        "**Best Time to Visit:** [e.g., Early Morning, Late Afternoon, Evening, Any Time, Specific Season if applicable]\n"
-        "**Family-Friendly:** [Yes/No/Depends (with brief explanation if 'Depends')]\n"
-        "**Requires Pre-booking:** [Yes/No/Recommended]\n"
-        "**Why this POI/Activity?:** [Briefly explain why this fits the user's interests/destination type, e.g., 'Great for history lovers', 'Offers stunning beach views'.]\n\n"
-        "If a segment (Morning, Afternoon, Evening) includes multiple POIs or activities, list each one sequentially. "
-        "Each POI/activity MUST have its own complete set of the details listed above. "
-        "Separate distinct POIs/activities within the same segment using a Markdown horizontal rule (e.g., '---').\n\n"
-        "At the end of EACH DAY'S plan (after listing all segments and their activities), please include:\n"
-        "**Daily Meal Suggestions:** [Suggest 2-3 types of cuisine or specific restaurant recommendations suitable for the day's location/activities. Mention breakfast, lunch, and dinner if appropriate.]\n"
-        "**Daily Logistical Tips:** [Include any relevant transportation advice, dress code notes, or other practical tips for the day.]\n"
-        "Ensure the entire itinerary is coherent and flows logically from one activity/day to the next."
+        " IMPORTANT: Respond *only* with a single, valid JSON object. Do not include any text or explanation before or after the JSON. "
+        "The JSON object must have the following top-level keys: "
+        "1. 'destination': A string with the name of the destination (e.g., \"Paris, France\"). "
+        "2. 'itinerary': A list of objects. Each object represents a single day's plan and *must* have the following keys: "
+        "   a. 'day': (integer) The day number (e.g., 1). "
+        "   b. 'day_summary': (string) A brief overall summary for the day's theme or main focus. "
+        # "   c. 'image_url': (string) A publicly accessible, royalty-free (if possible) direct URL to a general image representing the day. Use an empty string if no suitable image is found. " # REMOVED
+        "   c. 'activities': (list of objects) Each object in this list represents a specific POI or activity for the day and *must* include: " # Note: 'c' was 'd'
+        "      i. 'name': (string) Name of the POI or activity (e.g., \"Eiffel Tower Visit\"). "
+        "      ii. 'time_of_day': (string) Suggested time (e.g., \"Morning\", \"9:00 AM - 12:00 PM\", \"Afternoon\"). "
+        "      iii. 'description': (string) A detailed description of the POI/activity. "
+        "      iv. 'why_relevant': (string) Reason why this POI/activity is included or interesting. "
+        "      v. 'estimated_duration': (string) Estimated time to spend (e.g., \"2-3 hours\"). "
+        "      vi. 'estimated_cost': (string) Estimated cost (e.g., \"€25 per person\", \"Free\", \"$$ - Moderate\"). "
+        "      vii. 'poi_image_url': (string, optional) A direct URL to an image specific to this POI/activity. Use an empty string if not available. "
+        "   e. 'daily_meal_suggestions': (object) An object with keys 'breakfast', 'lunch', and 'dinner'. Each key should have a string value with a suggestion for that meal. If a meal suggestion isn't applicable or available, use an empty string for its value. Example: {\"breakfast\": \"Hotel breakfast or local bakery.\", \"lunch\": \"Cafe near museum.\", \"dinner\": \"Traditional restaurant for pasta.\"} "
+        "   f. 'daily_logistical_tips': (string) Any logistical tips for the day (e.g., \"Book museum tickets online. Wear comfortable shoes.\"). "
+        "3. 'estimated_cost': A string describing the overall estimated cost for the trip *excluding meals* (e.g., for accommodation, activities, local transport: \"$1000 - $1500 for 2 people\"). "
+        "4. 'estimated_daily_meal_cost_per_person': A string representing a typical daily cost for three meals per person (e.g., \"$50-70 USD\", \"€40-60 EUR\"). This should align with the user's budget preference. "
+        "Example of a day object within the 'itinerary' list: "
+        "{\"day\": 1, \"day_summary\": \"Exploring iconic Parisian landmarks.\", "
+        " \"activities\": [{\"name\": \"Eiffel Tower\", \"time_of_day\": \"Morning\", \"description\": \"Visit the iconic tower.\", \"why_relevant\": \"Symbol of Paris.\", \"estimated_duration\": \"2-3 hours\", \"estimated_cost\": \"€25\", \"poi_image_url\": \"https://example.com/eiffel.jpg\"}], "
+        " \"daily_meal_suggestions\": {\"breakfast\": \"Croissants and coffee.\", \"lunch\": \"Crepes from a street vendor.\", \"dinner\": \"Romantic bistro meal.\"}, \"daily_logistical_tips\": \"Book Eiffel Tower tickets online to avoid queues.\"} "
+        "The number of day objects in the 'itinerary' list should match the trip duration."
     )
     
     # 2. Call the LLM
@@ -100,35 +181,86 @@ def create_travel_itinerary(preferences):
         return None, None # Indicate failure
 
     # 3. Adapt LLM response (logic moved from app.py)
+    # Initialize adapted_itinerary with basic structure
     adapted_itinerary = {
-        "destination": llm_response.get("destination", destination_name), # Use LLM destination, fallback to input
+        "destination": llm_response.get("destination", destination_name),
         "from_date": from_date.strftime('%Y-%m-%d') if from_date and hasattr(from_date, 'strftime') else None,
         "to_date": to_date.strftime('%Y-%m-%d') if to_date and hasattr(to_date, 'strftime') else None,
         "duration": duration_days,
         "num_travellers": num_travellers,
-        "details": llm_response.get("itinerary", []),
-        "estimated_cost": llm_response.get("estimated_cost")
+        "details": [], # Will be populated after image processing
+        "estimated_cost": llm_response.get("estimated_cost"), # This is now ex-meals
+        "estimated_daily_meal_cost_per_person": llm_response.get("estimated_daily_meal_cost_per_person") # New field
     }
+    
+    # Calculate total meal cost if possible
+    total_estimated_meal_cost_str = None
+    daily_meal_cost_str = adapted_itinerary.get("estimated_daily_meal_cost_per_person")
+    if daily_meal_cost_str and isinstance(daily_meal_cost_str, str):
+        # Try to extract a numerical average from strings like "$50-70 USD" or "€40"
+        cost_numbers = re.findall(r'\d+\.?\d*', daily_meal_cost_str)
+        if cost_numbers:
+            avg_daily_cost_person = sum(float(c) for c in cost_numbers) / len(cost_numbers)
+            total_meal_cost = avg_daily_cost_person * duration_days * num_travellers
+            # Try to keep currency symbol if present
+            currency_symbol_match = re.search(r'([$€£¥₹])', daily_meal_cost_str) # Add more symbols as needed
+            currency_symbol = currency_symbol_match.group(1) if currency_symbol_match else ""
+            total_estimated_meal_cost_str = f"{currency_symbol}{total_meal_cost:.2f} for {num_travellers} person(s) over {duration_days} day(s)"
+            adapted_itinerary["total_estimated_meal_cost"] = total_estimated_meal_cost_str
+            print(f"Calculated total meal cost: {total_estimated_meal_cost_str}")
+        else:
+            # If no numbers found, but string exists, store it as is for display
+            adapted_itinerary["total_estimated_meal_cost"] = f"Approx. {daily_meal_cost_str} per person/day (total for {num_travellers} over {duration_days} days not auto-calculated)"
 
-    # 4. Save the generated itinerary with dynamic pathing
+
+    # Create images directory
+    images_dir_path = os.path.join(OUTPUT_DIR, IMAGES_SUBDIR)
+    os.makedirs(images_dir_path, exist_ok=True)
+
+    raw_itinerary_details = llm_response.get("itinerary", [])
+    processed_details = []
+
+    for day_plan_raw in raw_itinerary_details:
+        day_plan_processed = day_plan_raw.copy() # Start with a copy
+        
+        # Ensure 'image_url' for the day is not processed or added if it's not in the raw LLM response
+        if "image_url" in day_plan_processed:
+            del day_plan_processed["image_url"] # Remove it if LLM somehow still provides it
+
+        processed_activities = []
+        if "activities" in day_plan_raw and isinstance(day_plan_raw["activities"], list):
+            for activity_raw in day_plan_raw["activities"]:
+                activity_processed = activity_raw.copy()
+                poi_image_url_original = activity_raw.get("poi_image_url")
+                local_poi_image_path_activity = None
+                activity_name_sanitized = sanitize_foldername(activity_raw.get("name", "poi"))
+                poi_image_filename_base_activity = f"{adapted_itinerary['destination']}_day_{day_plan_raw.get('day', 'unknown')}_{activity_name_sanitized}"
+
+                if poi_image_url_original:
+                    local_poi_image_path_activity = download_image(poi_image_url_original, images_dir_path, poi_image_filename_base_activity)
+
+                if not local_poi_image_path_activity: # If original POI URL failed or was empty, try placeholder
+                    print(f"Attempting to get placeholder for POI image: {activity_raw.get('name', 'Activity')} in {adapted_itinerary['destination']}")
+                    placeholder_desc_poi = f"an image representing {activity_raw.get('name', 'an activity')} in {adapted_itinerary['destination']}"
+                    placeholder_poi_url = get_llm_placeholder_image_url(placeholder_desc_poi)
+                    if placeholder_poi_url:
+                        local_poi_image_path_activity = download_image(placeholder_poi_url, images_dir_path, f"{poi_image_filename_base_activity}_placeholder")
+                
+                activity_processed["poi_image_url"] = local_poi_image_path_activity if local_poi_image_path_activity else ""
+                processed_activities.append(activity_processed)
+        day_plan_processed["activities"] = processed_activities
+        processed_details.append(day_plan_processed)
+    
+    adapted_itinerary["details"] = processed_details
+
+    # 4. Save the generated itinerary (with local image paths)
     try:
-        # Use LLM-confirmed destination for folder structure
-        llm_confirmed_destination_sanitized = sanitize_foldername(adapted_itinerary.get('destination', 'generated_trip'))
-        
-        from_date_str_path = from_date.strftime('%Y-%m-%d') if from_date and hasattr(from_date, 'strftime') else "nodate"
-        to_date_str_path = to_date.strftime('%Y-%m-%d') if to_date and hasattr(to_date, 'strftime') else "nodate"
-        date_folder_name = f"{from_date_str_path}_to_{to_date_str_path}"
-
-        output_directory_path = os.path.join(OUTPUT_DIR, llm_confirmed_destination_sanitized, date_folder_name)
-        os.makedirs(output_directory_path, exist_ok=True)
-        
-        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-        output_filename_leaf = f"itinerary_{llm_confirmed_destination_sanitized}_{timestamp}.json"
-        output_filepath = os.path.join(output_directory_path, output_filename_leaf)
+        output_filename_leaf = "Generated_Output.json"
+        output_filepath = os.path.join(OUTPUT_DIR, output_filename_leaf)
         
         with open(output_filepath, 'w', encoding='utf-8') as f:
             json.dump(adapted_itinerary, f, indent=4, ensure_ascii=False)
-        print(f"Successfully saved itinerary to {output_filepath}")
+        print(f"Successfully saved itinerary with local image paths to {output_filepath}")
         return adapted_itinerary, output_filepath
         
     except Exception as e:
